@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SillyTavern {{user}}人设生成器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --error: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--accent), #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent);
+        }
+
+        .option-item label {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .textarea-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 16px;
+            background: var(--bg-primary);
+            border: 2px solid #3f3f3f;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .token-count {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .upload-btn input {
+            display: none;
+        }
+
+        .file-name {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .generate-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .generate-btn:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--text-secondary);
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #3f3f3f;
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .result-title {
+            color: var(--success);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .result-content {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            padding: 16px;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .optimize-section {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .optimize-title {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .optimize-input {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 2px solid #3f3f3f;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 12px;
+        }
+        
+        .optimize-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .optimize-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .optimize-btn:hover {
+            background: var(--accent-hover);
+        }
+        
+        .optimize-btn:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+        }
+        
+        .token-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #3f3f3f;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .optimize-loading {
+            text-align: center;
+            color: var(--text-secondary);
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .small-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #3f3f3f;
+            border-top: 2px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #3f3f3f;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-user-astronaut"></i> SillyTavern {{user}}人设生成器</h1>
+            <p class="subtitle">为您的酒馆 {{char}} 创建完美兼容的 {{user}} 人设</p>
+        </header>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-cog"></i> 生成选项
+            </div>
+            
+            <div class="options-grid">
+                <div class="option-item">
+                    <input type="checkbox" id="nsfw" name="nsfw">
+                    <label for="nsfw">NSFW 内容</label>
+                </div>
+                
+                <div class="option-item">
+                    <input type="checkbox" id="perfect" name="perfect" checked>
+                    <label for="perfect">完美人设</label>
+                </div>
+                
+                <div class="option-item">
+                    <input type="checkbox" id="detailed" name="detailed" checked>
+                    <label for="detailed">详细生成</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-user"></i> {{char}} 角色信息
+            </div>
+            
+            <div class="file-upload">
+                <label class="upload-btn">
+                    <i class="fas fa-upload"></i> 上传角色卡文件
+                    <input type="file" id="fileInput" accept=".json,.txt,.png,.jpg">
+                </label>
+                <div class="file-name" id="fileName">支持 JSON, TXT 或 PNG 文件</div>
+            </div>
+            
+            <div class="textarea-container">
+                <textarea id="charInfo" placeholder="在此粘贴您的 {{char}} 卡或描述（姓名、个性、背景、外貌等）"></textarea>
+                <div class="token-count" id="tokenCount">0 tokens</div>
+            </div>
+        </div>
+
+        <button id="generateBtn" class="generate-btn">
+            <i class="fas fa-magic"></i> 生成{{user}}人設
+        </button>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            正在生成{{user}}人设，请稍候...
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <div id="result" class="result" style="display: none;">
+            <div class="result-header">
+                <div class="result-title">
+                    <i class="fas fa-check-circle"></i> 重新生成{{user}}人設
+                </div>
+                <button class="copy-btn" onclick="copyToClipboard()">
+                    <i class="fas fa-copy"></i> 复制
+                </button>
+            </div>
+            
+            <div class="result-content" id="resultContent"></div>
+            
+            <!-- 优化区域 -->
+            <div class="optimize-section">
+                <div class="optimize-title">
+                    <i class="fas fa-wand-magic-sparkles"></i> 优化{{user}}人設
+                </div>
+                <textarea 
+                    id="optimizeInstruction" 
+                    class="optimize-input" 
+                    placeholder="请输入优化指令，例如：调整性格更加开朗，增加一些艺术爱好，减少NSFW内容等"
+                ></textarea>
+                <button id="optimizeBtn" class="optimize-btn" onclick="optimizeProfile()">
+                    <i class="fas fa-magic"></i> 提交优化
+                </button>
+                <div id="optimizeLoading" class="optimize-loading" style="display: none;">
+                    <div class="small-spinner"></div>
+                    正在优化中...
+                </div>
+            </div>
+            
+            <div class="token-info">
+                <span id="finalTokenCount">0 tokens</span>
+                <span id="optimizeCount" style="display: none;">优化次数: 0</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>注重隐私与安全 · 所有数据处理在本地进行 · 支持本地 LLM API</p>
+        </div>
+    </div>
+
+    <script>
+        let currentProfile = '';
+        let optimizeCount = 0;
+        
+        // 文件上传处理
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileName').textContent = file.name;
+            
+            const reader = new FileReader();
+            
+            // 处理文本文件
+            if (file.type === 'application/json' || file.type === 'text/plain') {
+                reader.onload = function(e) {
+                    document.getElementById('charInfo').value = e.target.result;
+                    updateInputTokenCount();
+                };
+                reader.readAsText(file);
+            } 
+            // 处理图像文件 (PNG, JPG)
+            else if (file.type === 'image/png' || file.type === 'image/jpeg') {
+                alert('图像文件检测: 请手动输入图像中的角色信息');
+                document.getElementById('fileName').textContent = '需要手动输入: ' + file.name;
+            }
+        });
+        
+        // 更新输入token计数
+        function updateInputTokenCount() {
+            const text = document.getElementById('charInfo').value;
+            const tokenCount = Math.round(text.length * (isChineseText(text) ? 2.5 : 0.25));
+            document.getElementById('tokenCount').textContent = tokenCount + ' tokens';
+        }
+        
+        function isChineseText(text) {
+            const chineseRatio = (text.match(/[\u4e00-\u9fa5]/g) || []).length / text.length;
+            return chineseRatio > 0.3;
+        }
+        
+        document.getElementById('charInfo').addEventListener('input', updateInputTokenCount);
+        
+        // 生成人设
+        document.getElementById('generateBtn').addEventListener('click', async function() {
+            const generateBtn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const errorText = document.getElementById('errorText');
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            
+            // 重置状态
+            errorDiv.style.display = 'none';
+            resultDiv.style.display = 'none';
+            loading.style.display = 'flex';
+            generateBtn.disabled = true;
+            
+            // 获取表单数据
+            const charInfo = document.getElementById('charInfo').value.trim();
+            if (!charInfo) {
+                errorText.textContent = '请输入或上传角色信息';
+                errorDiv.style.display = 'flex';
+                loading.style.display = 'none';
+                generateBtn.disabled = false;
+                return;
+            }
+            
+            const options = {
+                nsfw: document.getElementById('nsfw').checked,
+                perfect: document.getElementById('perfect').checked,
+                detailed: document.getElementById('detailed').checked
+            };
+            
+            try {
+                // 这里需要替换成您的实际后端URL
+                const API_BASE_URL = 'YOUR_RAILWAY_URL_HERE';
+                const response = await fetch(API_BASE_URL + '/generate-user-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        charInfo: charInfo,
+                        options: options
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                // 显示结果
+                currentProfile = data.userProfile;
+                resultContent.textContent = currentProfile;
+                updateFinalTokenCount();
+                
+                // 重置优化计数
+                optimizeCount = 0;
+                document.getElementById('optimizeCount').textContent = `优化次数: ${optimizeCount}`;
+                document.getElementById('optimizeCount').style.display = 'none';
+                
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                errorText.textContent = error.message;
+                errorDiv.style.display = 'flex';
+            } finally {
+                loading.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        });
+        
+        // 优化人设
+        async function optimizeProfile() {
+            const optimizeBtn = document.getElementById('optimizeBtn');
+            const optimizeLoading = document.getElementById('optimizeLoading');
+            const optimizeInstruction = document.getElementById('optimizeInstruction').value.trim();
+            
+            if (!optimizeInstruction) {
+                alert('请输入优化指令');
+                return;
+            }
+            
+            // 显示加载状态
+            optimizeBtn.disabled = true;
+            optimizeLoading.style.display = 'flex';
+            
+            try {
+                // 这里需要替换成您的实际后端URL
+                const API_BASE_URL = 'YOUR_RAILWAY_URL_HERE';
+                const response = await fetch(API_BASE_URL + '/optimize-user-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        originalProfile: currentProfile,
+                        optimizationInstruction: optimizeInstruction
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                // 更新人设
+                currentProfile = data.optimizedProfile;
+                document.getElementById('resultContent').textContent = currentProfile;
+                updateFinalTokenCount();
+                
+                // 增加优化计数
+                optimizeCount++;
+                document.getElementById('optimizeCount').textContent = `优化次数: ${optimizeCount}`;
+                document.getElementById('optimizeCount').style.display = 'inline';
+                
+                // 清空优化指令
+                document.getElementById('optimizeInstruction').value = '';
+                
+            } catch (error) {
+                alert('优化失败: ' + error.message);
+            } finally {
+                optimizeBtn.disabled = false;
+                optimizeLoading.style.display = 'none';
+            }
+        }
+        
+        // 更新最终token计数
+        function updateFinalTokenCount() {
+            const text = currentProfile;
+            const tokenCount = Math.round(text.length * (isChineseText(text) ? 2.5 : 0.25));
+            document.getElementById('finalTokenCount').textContent = tokenCount + ' tokens';
+        }
+        
+        // 复制功能
+        function copyToClipboard() {
+            const textToCopy = document.getElementById('resultContent').textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('{{user}}人设已复制到剪贴板!');
+            }).catch(err => {
+                alert('复制失败: ' + err);
+            });
+        }
+    </script>
+</body>
+  </html>

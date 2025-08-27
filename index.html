@@ -577,8 +577,8 @@
             
             try {
                 // 这里需要替换成您的实际后端URL
-                const API_BASE_URL = 'YOUR_RAILWAY_URL_HERE';
-                const response = await fetch(API_BASE_URL + '/generate-user-profile', {
+                const API_BASE_URL = window.location.origin;
+                const response = await fetch(API_BASE_URL + '/api/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -634,7 +634,7 @@
             try {
                 // 这里需要替换成您的实际后端URL
                 const API_BASE_URL = window.location.origin;
-                const response = await fetch(API_BASE_URL + '/optimize-user-profile', {
+                const response = await fetch(API_BASE_URL + '/api/optimize', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
